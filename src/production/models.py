@@ -5,7 +5,8 @@ from account.models import User
 
 
 class Production(models.Model):
+    nom = models.CharField(max_length=50)
+    date = models.DateField()
     quantite = models.FloatField()
-    reste = models.FloatField()
-    unite = models.CharField(max_length=25)
+    vendue = models.FloatField()
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="productions")

@@ -1,7 +1,6 @@
 from rest_framework.decorators import APIView
 from .serializers import ProductionSerializer
 from rest_framework.response import Response
-from django.db.models import Avg
 
 
 class ProductionView(APIView):
@@ -17,14 +16,26 @@ class ProductionView(APIView):
     def get(self, request):
         user = request.user
         serializer = ProductionSerializer(user.productions.all(), many=True)
-        averages = user.productions.aggregate(
-            moyenne_quantite=Avg('quantite'),
-            moyenne_reste=Avg('reste')
-        )
-        moyenne_quantite = averages['moyenne_quantite']
-        moyenne_reste = averages['moyenne_reste']
-        next = moyenne_quantite - moyenne_reste
+        data = serializer.data
+
+        total_quantite = 0
+        total_vendu = 0
+        for d in data:
+            d["stock"] = d["quantite"] - d["vendue"]
+            total_quantite += d["quantite"]
+            total_vendu += d["vendue"]
+
+        n = len(data)
+
+        efficacite_production = (total_vendu/total_quantite)*100
+
+        reste = total_quantite-total_vendu
+
+        next = (total_quantite/n) - (reste/n)
+
         return Response({
-            "production": serializer.data,
+            "production": data,
+            "efficacite_production": efficacite_production,
+            "stock_actuel": reste,
             'next': next
         })
